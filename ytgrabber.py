@@ -23,10 +23,13 @@ class YTGrabber:
         
         self.url = url.strip()          
         
-        if re.match(r"https://www\.youtube\.com/(playlist\?list=|channel/)[\w]+(/playlists|/videos)", self.url):
+        if re.match(r"^https://www\.youtube\.com/user/[\W\w]+/videos$", self.url):
+            return True
+
+        if re.match(r"^https://www\.youtube\.com/(playlist\?list=|channel/)[\W\w]+(/playlists|/videos)$", self.url):
             return True
         
-        if re.match(r"https://www\.youtube\.com/(playlist\?list=|channel/)[\w]+", self.url):
+        if re.match(r"https://www\.youtube\.com/(playlist\?list=|channel/)[\W\w]+", self.url):
             return True
         
         raise ValueError("URL is not correct!")
