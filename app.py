@@ -1,8 +1,13 @@
-from ytgrabber import YTGrabber
-from ytdownloader import YTDownloader
+from grabber import YTGrabber
+from downloader import YTDownloader
+from converter import YTConverter
 
 with YTGrabber() as ytg:
-    page = ytg('https://www.youtube.com/playlist?list=PLyIFQr1wryPIu-ta_1RTxj52EZo8CWH-K')
+    page = ytg('https://www.youtube.com/playlist?list=PLyhufYmBlouSGqOqpIiX9CogKOalmTfeV')
 
 ytd = YTDownloader()
+ytd.set_directory_save("D:\music")
 ytd.start(page)
+
+ytc = YTConverter(ytd.get_path_destination())
+ytc.convert()
