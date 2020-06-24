@@ -3,7 +3,7 @@ from downloader import YTDownloader
 from converter import YTConverter
 
 with YTGrabber() as ytg:
-    page = ytg('https://www.youtube.com/playlist?list=PLyIFQr1wryPKdWJzPV-bRccsnJqbNP1a6')
+    page = ytg('https://www.youtube.com/user/Nyasu93/videos')
 
 ytd = YTDownloader()
 ytd.set_directory_save("D:\music")

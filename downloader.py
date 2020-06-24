@@ -6,12 +6,13 @@ from urllib.error import URLError
 from time import sleep
 from exception import VideoPermissionDenied
 
+
 class YTDownloader:
     """
     Downloading audio track from YouTube video file.
     __call__ take YTGrabber dictionary.
     """
-    __directory_save = None
+    __directory_save: str = None
 
     def set_directory_save(self, path: str):
         self.__directory_save = path
@@ -22,16 +23,6 @@ class YTDownloader:
     def get_path_destination(self):
         return os.path.realpath(self.__path_destination)
 
-    @staticmethod
-    def _sleep(wait: int):
-        sleep_ = wait
-        print("***** sleep %s sec. *****" % sleep_)
-        sleep(sleep_)
-
-    def start(self, videos: dict, type='audio') -> None:
-        self._download(videos['videos'], videos['channel'], videos['playlist'], type)
-        print('YTDownloader work complete.')
-
     def get_audio(self, link) -> pytube.Stream:
         yt = pytube.YouTube(link)
         return yt.streams.filter(only_audio=True).last()
@@ -40,7 +31,11 @@ class YTDownloader:
         yt = pytube.YouTube(link)
         return yt.streams.get_lowest_resolution()
 
-    def check_files_is_downloaded(self, file_name) -> bool:
+    def start(self, videos: dict, type='audio') -> None:
+        self._download(videos['videos'], videos['channel'], videos['playlist'], type)
+        print('YTDownloader work complete.')
+
+    def _check_files_is_downloaded(self, file_name) -> bool:
         files = os.scandir(self.__path_destination)
 
         for file in files:
@@ -58,7 +53,7 @@ class YTDownloader:
         for link in links:
             filename = slugify(link['title'])
 
-            if self.check_files_is_downloaded(filename):
+            if self._check_files_is_downloaded(filename):
                 print("Downloaded: %s" % link['href'])
                 continue
 
@@ -108,13 +103,20 @@ class YTDownloader:
 
         return self.__path_destination
 
+    @staticmethod
+    def _sleep(wait: int):
+        sleep_ = wait
+        print("***** sleep %s sec. *****" % sleep_)
+        sleep(sleep_)
+
 
 if __name__ == '__main__':
     ytd = YTDownloader()
 
     videos = {
-        "videos": [{"href": "https://www.youtube.com/watch?v=b6J7aez8-qU&list=PLyIFQr1wryPKdWJzPV-bRccsnJqbNP1a6&index=21",
-                    "title": "Flux Gemini - Andromeda"}],
+        "videos": [
+            {"href": "https://www.youtube.com/watch?v=b6J7aez8-qU&list=PLyIFQr1wryPKdWJzPV-bRccsnJqbNP1a6&index=21",
+             "title": "Flux Gemini - Andromeda"}],
         "channel": "NewRetroWave",
         "playlist": "NRW Presents: Supreme Spacewave",
     }
