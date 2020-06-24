@@ -5,7 +5,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from grabber import YTGrabber
-from exception import PageNotFound, PageOops
+from exception import PageNotFound, PageOops, VideoRestrictions
 
 
 class TestYTGrabber:

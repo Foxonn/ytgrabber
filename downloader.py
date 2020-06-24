@@ -1,11 +1,16 @@
 import os
 from slugify import slugify
-from pytube import YouTube, Stream
+import pytube
+from pytube import exceptions
 from urllib.error import URLError
 from time import sleep
-
+from exception import VideoPermissionDenied
 
 class YTDownloader:
+    """
+    Downloading audio track from YouTube video file.
+    __call__ take YTGrabber dictionary.
+    """
     __directory_save = None
 
     def set_directory_save(self, path: str):
@@ -23,16 +28,16 @@ class YTDownloader:
         print("***** sleep %s sec. *****" % sleep_)
         sleep(sleep_)
 
-    def start(self, page: dict[str, str], type='audio') -> None:
-        self._download(page['videos'], page['channel'], page['playlist'], type)
+    def start(self, videos: dict, type='audio') -> None:
+        self._download(videos['videos'], videos['channel'], videos['playlist'], type)
         print('YTDownloader work complete.')
 
-    def get_audio(self, link) -> Stream:
-        yt = YouTube(link)
+    def get_audio(self, link) -> pytube.Stream:
+        yt = pytube.YouTube(link)
         return yt.streams.filter(only_audio=True).last()
 
-    def get_video(self, link: str) -> Stream:
-        yt = YouTube(link)
+    def get_video(self, link: str) -> pytube.Stream:
+        yt = pytube.YouTube(link)
         return yt.streams.get_lowest_resolution()
 
     def check_files_is_downloaded(self, file_name) -> bool:
@@ -45,6 +50,9 @@ class YTDownloader:
         return False
 
     def _download(self, links: list, channel: str, playlist: str = None, type: str = 'audio') -> None:
+        if not type in ['audio', 'video']:
+            raise ValueError("Type '%s' not support." % type)
+
         self._check_directory(channel, playlist)
 
         for link in links:
@@ -56,25 +64,21 @@ class YTDownloader:
 
             print("Start download: %s" % link['href'])
 
-            if type == 'audio':
-                while True:
-                    try:
+            while True:
+                try:
+                    if type == 'audio':
                         self.get_audio(link['href']).download(output_path=self.__path_destination, filename=filename)
-                        break
-                    except URLError as err:
-                        print("Error: %s" % err)
-                        self._sleep(10)
-
-            elif type == 'video':
-                while True:
-                    try:
+                    elif type == 'video':
                         self.get_video(link['href']).download(output_path=self.__path_destination, filename=filename)
-                        break
-                    except URLError as err:
-                        print("Error: %s" % err)
-                        self._sleep(10)
 
-            print("Download complete: %s" % link['href'])
+                    print("Download complete: %s" % link['href'])
+                    break
+                except exceptions.RegexMatchError:
+                    print(VideoPermissionDenied())
+                    break
+                except URLError as err:
+                    print("Error: %s" % err)
+                    self._sleep(10)
 
     def _check_directory(self, channel, playlist: str = None) -> str:
         channel = slugify(channel).lower()
@@ -94,7 +98,8 @@ class YTDownloader:
                 NotADirectoryError(self.__directory_save)
         else:
             if playlist:
-                self.__path_destination = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', channel,                                                       playlist)
+                self.__path_destination = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', channel,
+                                                       playlist)
             else:
                 self.__path_destination = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', channel)
 
@@ -106,11 +111,13 @@ class YTDownloader:
 
 if __name__ == '__main__':
     ytd = YTDownloader()
-    _ = {
-        "videos": [{"href": "https://youtu.be/ZLjX1HmccvU?list=PLyIFQr1wryPKfm76f3TkP61TaUJb049p5",
+
+    videos = {
+        "videos": [{"href": "https://www.youtube.com/watch?v=b6J7aez8-qU&list=PLyIFQr1wryPKdWJzPV-bRccsnJqbNP1a6&index=21",
                     "title": "Flux Gemini - Andromeda"}],
         "channel": "NewRetroWave",
         "playlist": "NRW Presents: Supreme Spacewave",
     }
-    ytd.set_directory_save("D:\music")
-    ytd.start(_)
+
+    ytd.set_directory_save(path="D:\music")
+    ytd.start(videos=videos, type='audio')

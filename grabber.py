@@ -25,11 +25,9 @@ if _run_from_ipython():
 
 
 class YTGrabber:
-    '''
-    Класс принимает Youtube URL страниц, плейлист и видео,
-    и возваращает все видеоматериалы данной страницы.
-    '''
-
+    """
+    Return dictionary with all videos, channel name, playlist name.
+    """
     __SELECTOR_PLAYLIST_VIDEOS = "#contents #contents #contents > *"
     __SELECTOR_ALL_VIDEOS = "#contents #contents #items > *"
     __SELECTOR_SPINNER = "#contents #contents #continuations #spinner"
@@ -61,10 +59,6 @@ class YTGrabber:
         return driver_path
 
     def _check_valid_url(self, url: str) -> bool:
-
-        if type(url) is int:
-            raise TypeError("URL is not to be int type!")
-
         self.__url = url.strip()
 
         if re.match(r"^https://www\.youtube\.com/user/[\W\w]+/videos$", self.__url):
@@ -134,7 +128,11 @@ class YTGrabber:
 
         return channel_name
 
-    def get_content(self, url):
+    def extract_videos(self, url: str) -> dict:
+        """
+        :param url: url of the video tab or playlist page
+        :return: dict
+        """
         self._get_page(url)
 
         self._find_html_block()
@@ -165,8 +163,12 @@ class YTGrabber:
         self.__driver = None
         self.__vdisplay = None
 
-    def __call__(self, url) -> dict:
-        return self.get_content(url)
+    def __call__(self, url: str) -> dict:
+        """
+        :param url: url of the video tab or playlist page
+        :return: dict
+        """
+        return self.extract_videos(url)
 
     def __enter__(self) -> 'YTGrabber':
         print("YTGrabber started working.")
@@ -196,5 +198,5 @@ class YTGrabber:
 
 if __name__ == '__main__':
     with YTGrabber() as yt:
-        print(yt('https://www.youtube.com/user/FlandyMusic/videos'))
-        print(yt('https://www.youtube.com/playlist?list=PLnwx-Ko_Jo_360x-41QTqiiG7lTWGn-Tp'))
+        print(yt.extract_videos(url='https://www.youtube.com/user/FlandyMusic/videos'))
+        print(yt(url='https://www.youtube.com/playlist?list=PLnwx-Ko_Jo_360x-41QTqiiG7lTWGn-Tp'))

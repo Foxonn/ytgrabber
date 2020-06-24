@@ -1,50 +1,61 @@
 import os
 import subprocess
 
+# need download to extract dir libs, https://ffmpeg.zeranoe.com/builds/
+
 PATH_TO_FFMPEG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libs', 'ffmpeg', "bin")
 os.environ["PATH"] += os.path.pathsep + PATH_TO_FFMPEG
 
 
 class YTConverter:
+    """
+    Converted [.webm, .mp4] file to .mp3 file
+    """
     __allow_extensions = ['webm', 'mp4']
 
-    def __init__(self, dir_files: str):
-        self.__dir_files = dir_files
-
     @staticmethod
-    def _clear(file: str) -> None:
+    def _del_source_file(file: str) -> None:
         if os.path.isfile(file):
             os.unlink(file)
 
-    def _check_extension(self, file_name: str):
+    @classmethod
+    def _check_extension(cls, file_name: str) -> bool:
         name, extension = file_name.split(".")
 
-        if extension in self.__allow_extensions:
+        if extension in cls.__allow_extensions:
             return True
 
         return False
 
-    def convert(self) -> None:
-        for file in os.scandir(self.__dir_files):
-            path_to_file, name_file = file.path, file.name
+    @classmethod
+    def convert(cls, dir_files: str) -> None:
+        """
+        :param dir_files: path to directory containing [.webm, .mp4] files.
+        """
+
+        if not os.path.isdir(dir_files):
+            raise NotADirectoryError
+
+        for file in os.scandir(dir_files):
+            path_to_file, file_name = file.path, file.name
 
             if os.path.isdir(file.path):
                 continue
 
-            if not self._check_extension(name_file):
+            if not cls._check_extension(file_name=file_name):
                 continue
 
-            save_to = os.path.join(self.__dir_files)
+            save_to = os.path.join(dir_files)
 
             if not os.path.isdir(save_to):
                 os.makedirs(save_to)
 
-            path_to_new_file = os.path.join(self.__dir_files, 'audio', "%s.mp3" % name_file.split(".")[0])
+            path_to_new_file = os.path.join(dir_files, "%s.mp3" % file_name.split(".")[0])
 
             res = subprocess.call(f"ffmpeg -loglevel error -y -i {path_to_file} -acodec libmp3lame {path_to_new_file}")
 
             if res == 0 and os.path.isfile(path_to_new_file):
-                self._clear(path_to_file)
+                cls._del_source_file(path_to_file)
                 print(f"File '{file.name}' converted.")
                 continue
 
@@ -52,5 +63,4 @@ class YTConverter:
 
 
 if __name__ == '__main__':
-    ytc = YTConverter(r"D:\Development\py-laboratory\newretrowave\essential-retro-electro-tracks-newretrowave-certified")
-    ytc.convert()
+    YTConverter.convert(r"D:\music\newretrowave\nrw-presents-supreme-spacewave")
