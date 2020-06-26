@@ -45,7 +45,7 @@ class YTDownloader:
         return False
 
     def __download(self, links: list, channel: str, playlist: str = None, type: str = 'audio') -> None:
-        if not type in ['audio', 'video']:
+        if type not in ['audio', 'video']:
             try:
                 raise ValueError("Type '%s' not support." % type)
             except Exception as err:

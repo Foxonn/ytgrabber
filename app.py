@@ -6,7 +6,7 @@ with YTGrabber() as ytg:
     page = ytg('https://www.youtube.com/playlist?list=PLyIFQr1wryPIw7xkMZH_HXmkQbXhZyOMJ')
 
 ytd = YTDownloader()
-ytd.set_directory_save("D:\music")
+ytd.set_directory_save(r"D:\music")
 ytd.start(page)
 
 YTConverter.convert(ytd.get_path_destination())

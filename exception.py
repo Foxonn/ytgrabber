@@ -34,4 +34,4 @@ class PageOops(Exception):
 
 if __name__ == '__main__':
     if True:
-        print(VideoPermissionDenied())
+        print(PageOops)

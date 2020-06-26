@@ -8,7 +8,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
-from selenium.common import exceptions
 
 from exception import PageNotFound, PageOops
 
@@ -17,7 +16,7 @@ def _run_from_ipython():
     try:
         __IPYTHON__
         return True
-    except NameError as err:
+    except NameError:
         return False
 
 
@@ -107,7 +106,7 @@ class YTGrabber:
             try:
                 WebDriverWait(self.__driver, 3).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, self.__SELECTOR_SPINNER)))
-            except:
+            except Exception:
                 break
 
     def __find_videos(self) -> selenium.webdriver.remote.webelement.WebElement:
@@ -163,7 +162,8 @@ class YTGrabber:
             content['videos'].append({
                 "title": video.find_element_by_id("video-title").get_attribute("title"),
                 "href": video.find_element_by_id("video-title").get_attribute("href") or
-                        video.find_element_by_class_name("ytd-thumbnail").get_attribute("href"),
+                        video.find_element_by_class_name("ytd-thumbnail")
+                            .get_attribute("href"),
                 "thumbnail": video.find_element_by_id("img").get_attribute("src"),
             })
 
