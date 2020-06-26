@@ -2,6 +2,7 @@ import re
 import os
 import requests
 import selenium
+from mylogger import logging
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -16,7 +17,7 @@ def _run_from_ipython():
     try:
         __IPYTHON__
         return True
-    except NameError:
+    except NameError as err:
         return False
 
 
@@ -36,15 +37,7 @@ class YTGrabber:
     __YOUTUBE_OOPS_PAGE = "https://www.youtube.com/oops"
 
     @staticmethod
-    def _run_from_ipython() -> bool:
-        try:
-            __IPYTHON__
-            return True
-        except NameError:
-            return False
-
-    @staticmethod
-    def _check_os_name() -> str:
+    def __check_os_name() -> str:
         path_to_dir = os.path.dirname(os.path.abspath(__file__))
         path_to_driver_dir = os.path.join(path_to_dir, 'driver')
 
@@ -54,11 +47,15 @@ class YTGrabber:
             driver_path = os.path.join(path_to_driver_dir, "chromedriver")
 
         if not os.path.isfile(driver_path):
-            raise FileExistsError(driver_path)
+            try:
+                raise FileExistsError(driver_path)
+            except Exception as err:
+                logging.exception(err)
+                raise
 
         return driver_path
 
-    def _check_valid_url(self, url: str) -> bool:
+    def __check_valid_url(self, url: str) -> bool:
         self.__url = url.strip()
 
         if re.match(r"^https://www\.youtube\.com/user/[\W\w]+/videos$", self.__url):
@@ -72,58 +69,71 @@ class YTGrabber:
 
         raise ValueError("URL is not correct!")
 
-    def _find_html_block(self) -> None:
-        self.__html = WebDriverWait(self.__driver, 3).until(
-            EC.presence_of_element_located((By.TAG_NAME, "html")),
-            "`html` tag not found !")
+    def __find_html_block(self) -> None:
+        try:
+            self.__html = WebDriverWait(self.__driver, 3).until(
+                EC.presence_of_element_located((By.TAG_NAME, "html")),
+                "`html` tag not found !")
+        except Exception as err:
+            logging.exception(err)
+            raise
 
-    def _get_page(self, url) -> bool:
-        self._check_valid_url(url)
+    def __get_page(self, url) -> bool:
+        self.__check_valid_url(url)
 
         resp = requests.get(self.__url, allow_redirects=True)
 
         if resp.text.find("404 Not Found") >= 0:
-            raise PageNotFound
+            try:
+                raise PageNotFound
+            except Exception as err:
+                logging.exception(err)
+                raise
 
         if resp.url == self.__YOUTUBE_OOPS_PAGE:
-            raise PageOops
+            try:
+                raise PageOops
+            except Exception as err:
+                logging.exception(err)
+                raise
 
         self.__driver.get(self.__url)
 
         return True
 
-    def _preloader_handler(self) -> None:
+    def __preloader_handler(self) -> None:
         while True:
             self.__html.send_keys(Keys.END)
             try:
                 WebDriverWait(self.__driver, 3).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, self.__SELECTOR_SPINNER))
-                )
+                    EC.presence_of_element_located((By.CSS_SELECTOR, self.__SELECTOR_SPINNER)))
             except:
                 break
 
-    def _find_videos(self) -> selenium.webdriver.remote.webelement.WebElement:
+    def __find_videos(self) -> selenium.webdriver.remote.webelement.WebElement:
         videos = self.__html.find_elements(By.CSS_SELECTOR, self.__SELECTOR_ALL_VIDEOS)
 
         if not videos:
             videos = self.__html.find_elements(By.CSS_SELECTOR, self.__SELECTOR_PLAYLIST_VIDEOS)
 
         if not videos:
+            logging.exception("Videos not found !")
             raise Exception("Videos not found !")
 
         return videos
 
-    def _find_name_playlist(self) -> str:
+    def __find_name_playlist(self) -> str:
         name_playlist = self.__html.find_elements(By.CSS_SELECTOR, self.__SELECTOR_NAME_PLAYLIST)
         return name_playlist[0] if name_playlist else None
 
-    def _find_name_channel(self) -> str:
+    def __find_name_channel(self) -> str:
         channel_name = self.__html.find_elements(By.CSS_SELECTOR, self.__SELECTOR_CHANNEL_NAME)
 
         if channel_name[2]:
             channel_name = channel_name[2]
 
         if not channel_name.text:
+            logging.exception("Channel name not found !")
             raise Exception("Channel name not found !")
 
         return channel_name
@@ -133,15 +143,15 @@ class YTGrabber:
         :param url: url of the video tab or playlist page
         :return: dict
         """
-        self._get_page(url)
+        self.__get_page(url)
 
-        self._find_html_block()
+        self.__find_html_block()
 
-        videos = self._find_videos()
+        videos = self.__find_videos()
 
-        channel_name = self._find_name_channel()
+        channel_name = self.__find_name_channel()
 
-        playlist_name = self._find_name_playlist()
+        playlist_name = self.__find_name_playlist()
 
         content = {
             "playlist": playlist_name.text if playlist_name else None,
@@ -171,7 +181,7 @@ class YTGrabber:
         return self.extract_videos(url)
 
     def __enter__(self) -> 'YTGrabber':
-        print("YTGrabber started working.")
+        logging.info("YTGrabber started working.")
 
         if _run_from_ipython():
             self.__vdisplay = Xvfb()
@@ -180,14 +190,14 @@ class YTGrabber:
         options = webdriver.ChromeOptions()
         options.add_argument("--headless")
 
-        driver_path = self._check_os_name()
+        driver_path = self.__check_os_name()
 
         self.__driver = webdriver.Chrome(options=options, executable_path=driver_path)
 
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        print("YTGrabber finished working.")
+        logging.info("YTGrabber finished working.")
 
         if self.__driver:
             self.__driver.close()
@@ -198,5 +208,4 @@ class YTGrabber:
 
 if __name__ == '__main__':
     with YTGrabber() as yt:
-        print(yt.extract_videos(url='https://www.youtube.com/user/FlandyMusic/videos'))
         print(yt(url='https://www.youtube.com/playlist?list=PLnwx-Ko_Jo_360x-41QTqiiG7lTWGn-Tp'))

@@ -1,10 +1,10 @@
 import os
+from mylogger import logging
 from slugify import slugify
 import pytube
 from pytube import exceptions
 from urllib.error import URLError
 from time import sleep
-from exception import VideoPermissionDenied
 
 
 class YTDownloader:
@@ -32,10 +32,10 @@ class YTDownloader:
         return yt.streams.get_lowest_resolution()
 
     def start(self, videos: dict, type='audio') -> None:
-        self._download(videos['videos'], videos['channel'], videos['playlist'], type)
-        print('YTDownloader work complete.')
+        self.__download(videos['videos'], videos['channel'], videos['playlist'], type)
+        logging.info('YTDownloader work complete.')
 
-    def _check_files_is_downloaded(self, file_name) -> bool:
+    def __check_files_is_downloaded(self, file_name) -> bool:
         files = os.scandir(self.__path_destination)
 
         for file in files:
@@ -44,20 +44,24 @@ class YTDownloader:
 
         return False
 
-    def _download(self, links: list, channel: str, playlist: str = None, type: str = 'audio') -> None:
+    def __download(self, links: list, channel: str, playlist: str = None, type: str = 'audio') -> None:
         if not type in ['audio', 'video']:
-            raise ValueError("Type '%s' not support." % type)
+            try:
+                raise ValueError("Type '%s' not support." % type)
+            except Exception as err:
+                logging.exception(err)
+                raise
 
-        self._check_directory(channel, playlist)
+        self.__check_directory(channel, playlist)
 
         for link in links:
             filename = slugify(link['title'])
 
-            if self._check_files_is_downloaded(filename):
-                print("Downloaded: %s" % link['href'])
+            if self.__check_files_is_downloaded(filename):
+                logging.info("Downloaded: %s" % link['href'])
                 continue
 
-            print("Start download: %s" % link['href'])
+            logging.info("Start download: %s" % link['href'])
 
             while True:
                 try:
@@ -66,16 +70,16 @@ class YTDownloader:
                     elif type == 'video':
                         self.get_video(link['href']).download(output_path=self.__path_destination, filename=filename)
 
-                    print("Download complete: %s" % link['href'])
+                    logging.info("Download complete: %s" % link['href'])
                     break
                 except exceptions.RegexMatchError:
-                    print(VideoPermissionDenied())
+                    logging.warning("Video get permission denied.")
                     break
                 except URLError as err:
-                    print("Error: %s" % err)
-                    self._sleep(10)
+                    logging.warning(err)
+                    self.__sleep(10)
 
-    def _check_directory(self, channel, playlist: str = None) -> str:
+    def __check_directory(self, channel, playlist: str = None) -> str:
         channel = slugify(channel).lower()
         playlist = slugify(playlist).lower() if playlist else None
 
@@ -90,7 +94,11 @@ class YTDownloader:
                 if not os.path.isdir(self.__path_destination):
                     os.makedirs(self.__path_destination)
             else:
-                NotADirectoryError(self.__directory_save)
+                try:
+                    raise NotADirectoryError(self.__directory_save)
+                except Exception as err:
+                    logging.exception(err)
+                    raise
         else:
             if playlist:
                 self.__path_destination = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', channel,
@@ -104,9 +112,9 @@ class YTDownloader:
         return self.__path_destination
 
     @staticmethod
-    def _sleep(wait: int):
+    def __sleep(wait: int):
         sleep_ = wait
-        print("***** sleep %s sec. *****" % sleep_)
+        logging.info("***** sleep %s sec. *****" % sleep_)
         sleep(sleep_)
 
 
@@ -115,11 +123,11 @@ if __name__ == '__main__':
 
     videos = {
         "videos": [
-            {"href": "https://www.youtube.com/watch?v=b6J7aez8-qU&list=PLyIFQr1wryPKdWJzPV-bRccsnJqbNP1a6&index=21",
-             "title": "Flux Gemini - Andromeda"}],
+            {"href": "https://www.youtube.com/watch?v=KVfCseuFz4w",
+             "title": "Robert Parker - Aiming High (Visualizer) from the Game \"Wave Break\""}],
         "channel": "NewRetroWave",
-        "playlist": "NRW Presents: Supreme Spacewave",
+        "playlist": "",
     }
 
-    ytd.set_directory_save(path="D:\music")
+    # ytd.set_directory_save(path="D:\music")
     ytd.start(videos=videos, type='audio')
