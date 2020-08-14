@@ -1,12 +1,19 @@
 from grabber import YTGrabber
-from downloader import YTDownloader
-from converter import YTConverter
+from downloader import start_download
+from converter import convert
+
+datas: YTGrabber = None
 
 with YTGrabber() as ytg:
-    page = ytg('https://www.youtube.com/playlist?list=PLyIFQr1wryPIw7xkMZH_HXmkQbXhZyOMJ')
+    datas = ytg('https://www.youtube.com/playlist?list='
+                'PLyIFQr1wryPKTGEB3dNxktq2htXoRetIV')
 
-ytd = YTDownloader()
-ytd.set_directory_save("D:\music")
-ytd.start(page)
+path_destination = start_download(
+    datas=datas,
+    to_save=r'D:\Development\py-laboratory\ytgrabber\music'
+)
 
-YTConverter.convert(ytd.get_path_destination())
+convert(
+    dir_files=path_destination,
+    remove=True
+)
