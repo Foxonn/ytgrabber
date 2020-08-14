@@ -50,7 +50,7 @@ class YTGrabber:
             try:
                 raise FileExistsError(driver_path)
             except Exception as err:
-                logging.exception(err)
+                logging.error(err)
                 raise
 
         return driver_path
@@ -75,7 +75,7 @@ class YTGrabber:
                 EC.presence_of_element_located((By.TAG_NAME, "html")),
                 "`html` tag not found !")
         except Exception as err:
-            logging.exception(err)
+            logging.error(err)
             raise
 
     def __get_page(self, url) -> bool:
@@ -87,14 +87,14 @@ class YTGrabber:
             try:
                 raise PageNotFound
             except Exception as err:
-                logging.exception(err)
+                logging.error(err)
                 raise
 
         if resp.url == self.__YOUTUBE_OOPS_PAGE:
             try:
                 raise PageOops
             except Exception as err:
-                logging.exception(err)
+                logging.error(err)
                 raise
 
         self.__driver.get(self.__url)
@@ -117,8 +117,8 @@ class YTGrabber:
             videos = self.__html.find_elements(By.CSS_SELECTOR, self.__SELECTOR_PLAYLIST_VIDEOS)
 
         if not videos:
-            logging.exception("Videos not found !")
-            raise Exception("Videos not found !")
+            logging.error("Videos not found !")
+            quit()
 
         return videos
 
@@ -133,8 +133,8 @@ class YTGrabber:
             channel_name = channel_name[2]
 
         if not channel_name.text:
-            logging.exception("Channel name not found !")
-            raise Exception("Channel name not found !")
+            logging.error("Channel name not found !")
+            quit()
 
         return channel_name
 

@@ -51,7 +51,7 @@ def _downloader(type, to_save, **kwargs) -> str:
         try:
             raise ValueError("Type '%s' not support." % type)
         except Exception as err:
-            logging.exception(err)
+            logging.warning(err)
 
     path_destination = _check_directory(kwargs['channel'],
                                         kwargs['playlist'],
@@ -69,25 +69,27 @@ def _downloader(type, to_save, **kwargs) -> str:
         while True:
             try:
                 if type == 'audio':
-                    get_audio(video['href']).download(
-                        output_path=path_destination,
-                        filename=filename
-                    )
-
+                    if audio := get_audio(video['href']):
+                        audio.download(
+                            output_path=path_destination,
+                            filename=filename)
+                    else:
+                        continue
                 elif type == 'video':
-                    get_video(video['href']).download(
-                        output_path=path_destination,
-                        filename=filename
-                    )
+                    if video := get_video(video['href']):
+                        video.download(
+                            output_path=path_destination,
+                            filename=filename)
+                    else:
+                        continue
 
-                logging.info("Download complete: %s" % video['href'])
+                logging.info(f"Download complete: {filename} | { video['href']}")
                 break
-
             except pytube.exceptions.RegexMatchError:
                 logging.warning("Video get permission denied.")
                 break
             except URLError as err:
-                logging.warning(err)
+                logging.error(err)
                 _sleep()
 
     return path_destination
@@ -111,7 +113,7 @@ def _check_directory(channel, playlist, to_save) -> None:
             try:
                 raise NotADirectoryError(to_save)
             except Exception as err:
-                logging.exception(err)
+                logging.error(err)
                 raise
 
     return path_destination

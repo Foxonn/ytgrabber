@@ -1,4 +1,6 @@
-*.pyc
 .idea/
 .ipynb_checkpoints/
+.pytest_cache/
+logs/
+*.pyc
 test_fields

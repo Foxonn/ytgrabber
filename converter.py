@@ -23,7 +23,7 @@ def _filter_files(dir_files, allow_extensions: list = ['webm', 'mp4']):
         try:
             raise NotADirectoryError
         except Exception as err:
-            logging.exception(err)
+            logging.err(err)
             raise
 
     for file in os.scandir(dir_files):
@@ -41,7 +41,7 @@ def convert(dir_files, remove: bool = False) -> None:
     files = _filter_files(dir_files)
 
     if not files:
-        logging.warning("Files not found!")
+        logging.warning("Files to converting not found!")
         return False
 
     for file in files:

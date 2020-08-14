@@ -10,7 +10,7 @@ with YTGrabber() as ytg:
 
 path_destination = start_download(
     datas=datas,
-    to_save=r'D:\Development\py-laboratory\ytgrabber\music'
+    to_save=r'D:\music'
 )
 
 convert(
